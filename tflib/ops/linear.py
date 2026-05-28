@@ -1,7 +1,9 @@
 import tflib as lib
 
 import numpy as np
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
+
+tf.disable_v2_behavior()
 
 _default_weightnorm = False
 def enable_default_weightnorm():
@@ -81,7 +83,7 @@ def Linear(
                 if len(shape) < 2:
                     raise RuntimeError("Only shapes of length 2 or more are "
                                        "supported.")
-                flat_shape = (shape[0], np.prod(shape[1:]))
+                flat_shape = (shape[0], int(np.prod(shape[1:])))
                  # TODO: why normal and not uniform?
                 a = np.random.normal(0.0, 1.0, flat_shape)
                 u, _, v = np.linalg.svd(a, full_matrices=False)
@@ -122,7 +124,7 @@ def Linear(
             )
 
             with tf.name_scope('weightnorm') as scope:
-                norms = tf.sqrt(tf.reduce_sum(tf.square(weight), reduction_indices=[0]))
+                norms = tf.sqrt(tf.reduce_sum(tf.square(weight), axis=[0]))
                 weight = weight * (target_norms / norms)
 
         # if 'Discriminator' in name:
@@ -134,7 +136,7 @@ def Linear(
         else:
             reshaped_inputs = tf.reshape(inputs, [-1, input_dim])
             result = tf.matmul(reshaped_inputs, weight)
-            result = tf.reshape(result, tf.pack(tf.unpack(tf.shape(inputs))[:-1] + [output_dim]))
+            result = tf.reshape(result, tf.stack(tf.unstack(tf.shape(inputs))[:-1] + [output_dim]))
 
         if biases:
             result = tf.nn.bias_add(

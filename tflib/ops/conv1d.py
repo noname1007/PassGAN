@@ -1,7 +1,9 @@
 import tflib as lib
 
 import numpy as np
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
+
+tf.disable_v2_behavior()
 
 _default_weightnorm = False
 def enable_default_weightnorm():
@@ -31,8 +33,8 @@ def Conv1D(name, input_dim, output_dim, filter_size, inputs, he_init=True, mask_
             mask[center+1:, :, :] = 0.
 
             # Mask out future channels
-            for i in xrange(mask_n_channels):
-                for j in xrange(mask_n_channels):
+            for i in range(mask_n_channels):
+                for j in range(mask_n_channels):
                     if (mask_type=='a' and i >= j) or (mask_type=='b' and i > j):
                         mask[
                             center,
@@ -49,11 +51,11 @@ def Conv1D(name, input_dim, output_dim, filter_size, inputs, he_init=True, mask_
             ).astype('float32')
 
         fan_in = input_dim * filter_size
-        fan_out = output_dim * filter_size / stride
+        fan_out = output_dim * filter_size // stride
 
         if mask_type is not None: # only approximately correct
-            fan_in /= 2.
-            fan_out /= 2.
+            fan_in //= 2
+            fan_out //= 2
 
         if he_init:
             filters_stdev = np.sqrt(4./(fan_in+fan_out))
@@ -78,7 +80,7 @@ def Conv1D(name, input_dim, output_dim, filter_size, inputs, he_init=True, mask_
                 norm_values
             )
             with tf.name_scope('weightnorm') as scope:
-                norms = tf.sqrt(tf.reduce_sum(tf.square(filters), reduction_indices=[0,1]))
+                norms = tf.sqrt(tf.reduce_sum(tf.square(filters), axis=[0,1]))
                 filters = filters * (target_norms / norms)
 
         if mask_type is not None:

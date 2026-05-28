@@ -3,7 +3,9 @@ import os
 import time
 import pickle
 import argparse
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
+
+tf.disable_v2_behavior()
 import numpy as np
 
 # Files
@@ -107,7 +109,7 @@ with tf.Session() as session:
         return decoded_samples
 
     def save(samples):
-        with open(args.output, 'a') as f:
+        with open(args.output, 'a', encoding='utf-8') as f:
                 for s in samples:
                     s = "".join(s).replace('`', '')
                     f.write(s + "\n")

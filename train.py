@@ -5,7 +5,9 @@ import time
 import pickle
 import argparse
 import numpy as np
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
+
+tf.disable_v2_behavior()
 
 import utils
 import tflib as lib
@@ -79,6 +81,10 @@ def parse_args():
 
 args = parse_args()
 
+os.makedirs(args.output_dir, exist_ok=True)
+os.makedirs(os.path.join(args.output_dir, 'checkpoints'), exist_ok=True)
+os.makedirs(os.path.join(args.output_dir, 'samples'), exist_ok=True)
+
 lines, charmap, inv_charmap = utils.load_dataset(
     path=args.training_data,
     max_length=args.seq_length)
@@ -106,7 +112,7 @@ disc_cost = tf.reduce_mean(disc_fake) - tf.reduce_mean(disc_real)
 gen_cost = -tf.reduce_mean(disc_fake)
 
 # WGAN lipschitz-penalty
-alpha = tf.random_uniform(
+alpha = tf.random.uniform(
     shape=[args.batch_size,1,1],
     minval=0.,
     maxval=1.
@@ -115,7 +121,7 @@ alpha = tf.random_uniform(
 differences = fake_inputs - real_inputs
 interpolates = real_inputs + (alpha*differences)
 gradients = tf.gradients(models.Discriminator(interpolates, args.seq_length, args.layer_dim, len(charmap)), [interpolates])[0]
-slopes = tf.sqrt(tf.reduce_sum(tf.square(gradients), reduction_indices=[1,2]))
+slopes = tf.sqrt(tf.reduce_sum(tf.square(gradients), axis=[1,2]))
 gradient_penalty = tf.reduce_mean((slopes-1.)**2)
 disc_cost += args.lamb * gradient_penalty
 
@@ -199,7 +205,7 @@ with tf.Session() as session:
                 lm = utils.NgramLanguageModel(i+1, samples, tokenize=False)
                 lib.plot.plot('js{}'.format(i+1), lm.js_with(true_char_ngram_lms[i]))
 
-            with open(os.path.join(args.output_dir, 'samples', 'samples_{}.txt').format(iteration), 'w') as f:
+            with open(os.path.join(args.output_dir, 'samples', 'samples_{}.txt').format(iteration), 'w', encoding='utf-8') as f:
                 for s in samples:
                     s = "".join(s)
                     f.write(s + "\n")

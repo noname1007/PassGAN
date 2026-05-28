@@ -25,10 +25,8 @@ def plot(name, value):
 def flush():
     prints = []
 
-    print(_since_last_flush.items())
-
     for name, vals in _since_last_flush.items():
-        prints.append("{}\t{}".format(name, np.mean(list(vals.values()))))
+        prints.append("{}\t{}".format(name, float(np.mean(list(vals.values())))))
         _since_beginning[name].update(vals)
 
         x_vals = np.sort(list(_since_beginning[name].keys()))

@@ -1,4 +1,6 @@
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
+
+tf.disable_v2_behavior()
 import tflib as lib
 import tflib.ops.linear
 import tflib.ops.conv1d
@@ -51,4 +53,4 @@ def softmax(logits, num_classes):
     )
 
 def make_noise(shape):
-    return tf.random_normal(shape)
+    return tf.random.normal(shape)
